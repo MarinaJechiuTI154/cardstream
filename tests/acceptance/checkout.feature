@@ -1,0 +1,9 @@
+Feature: checkout
+  In order to ...
+  As a ...
+  I need to ...
+
+  Scenario: try checkout
+    Given I'm user
+    When I click
+    Then I see

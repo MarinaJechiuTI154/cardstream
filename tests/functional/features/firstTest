@@ -1,0 +1,7 @@
+Feature:
+
+  @tr
+  Scenario:
+    Given I am a user
+    When I access the hosted forms
+    Then I can see Pay button

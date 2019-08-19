@@ -1,0 +1,2 @@
+tests/acceptance/SigninCest.php:tryToTest
+tests/acceptance/SigninCest.php:loginSuccessfully

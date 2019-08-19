@@ -1,0 +1,92 @@
+version: '3'
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mysql:
+    driver: local
+
+services:
+
+  dev:
+    container_name: 'dev'
+    build:
+      context: .docker/dev
+      args:
+        - DOCKER_PHP_VERSION=7.2
+        - PUID=1000
+        - PGID=1000
+        - TIMEZONE=UTC
+    volumes:
+      - ./:/var/www
+    extra_hosts:
+      - "dockerhost:10.0.75.1"
+    ports:
+      - "2222:22"
+    environment:
+      - PHP_IDE_CONFIG=serverName=default
+      - DOCKER_HOST=tcp://docker-in-docker:2375
+    networks:
+      - backend
+
+  php-fpm:
+    container_name: 'php'
+    build:
+      context: .docker/php-fpm
+      args:
+        - DOCKER_PHP_VERSION=7.2
+    volumes:
+      - ./.docker/php-fpm/php7.2.ini:/usr/local/etc/php/php.ini
+      - ./:/var/www
+    expose:
+      - "9000"
+    extra_hosts:
+      - "dockerhost:10.0.75.1"
+    environment:
+      - PHP_IDE_CONFIG=serverName=default
+      - DOCKER_HOST=tcp://docker-in-docker:2375
+    depends_on:
+      - dev
+    networks:
+      - backend
+
+  nginx:
+    container_name: 'nginx'
+    build:
+      context: .docker/nginx
+      args:
+        - PHP_UPSTREAM_CONTAINER=php-fpm
+        - PHP_UPSTREAM_PORT=9000
+    volumes:
+      - ./:/var/www
+      - ./.docker/data/logs/nginx/:/var/log/nginx
+      - ./.docker/nginx/sites/:/etc/nginx/sites-available
+      - ./.docker/nginx/ssl/:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - php-fpm
+    networks:
+      - backend
+
+  # mysql:
+  #   container_name: 'mysql'
+  #   build:
+  #     context: .docker/mysql
+  #     args:
+  #     - MYSQL_VERSION=5.6
+  #   environment:
+  #     - MYSQL_DATABASE=default
+  #     - MYSQL_USER=default
+  #     - MYSQL_PASSWORD=default
+  #     - MYSQL_ROOT_PASSWORD=secret
+  #     - TIMEZONE=UTC
+  #   volumes:
+  #     - ./.docker/data/mysql:/var/lib/mysql
+  #   ports:
+  #     - "3306:3306"
+  #   networks:
+  #     - backend
